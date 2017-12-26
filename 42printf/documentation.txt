@@ -1,0 +1,9 @@
+test.c
+- contains main()
+- calls test_func()
+-- test_func()
+
+test_func()
+- va_start initializes the list of arguments being passed in
+- TEST_FUNC macro defines a function that saves the output to a string so that it can be compared
+
