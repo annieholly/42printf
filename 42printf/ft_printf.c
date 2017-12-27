@@ -7,7 +7,9 @@
 #define TYPE_COUNT 52
 #define FORMAT_MODE 1
 #define NORMAL_MODE 0
-#define FLAG_MODE 2
+#define FLAG_ZERO_MODE 2
+#define PRECISION_MODE 3
+#define PRECISION_DOT '.'
 #define FLAG_MINUS '-'
 #define FLAG_PLUS '+'
 #define FLAG_SPACE ' '
@@ -18,7 +20,15 @@
 #define FLAG_ADDSPACE 4
 #define FLAG_ADDZERO 8
 #define FLAG_ADDHASH 16
+#define FLAG_PRECISION 32
 
+typedef struct s_format
+{
+  int flags;
+  int width;
+  int precision;
+  int length;
+} format_options;
 
 
 void ft_putchar_file(FILE *fd, char c)
@@ -27,12 +37,15 @@ void ft_putchar_file(FILE *fd, char c)
 }
 
 
-void printstring(int flags, int width, int precision, int length, void *param, FILE *out)
+void printstring(format_options options, void *param, FILE *out)
 {
   int i;
   char *string = (char *)param;
+  int strlen = ft_strlen(string);
   i = 0;
-  while (string[i] != '\0')
+  if (options.flags & FLAG_PRECISION)
+    strlen = options.precision;
+  while (i < strlen)
   {
     ft_putchar_file(out, string[i]);
     i++;
@@ -40,15 +53,27 @@ void printstring(int flags, int width, int precision, int length, void *param, F
 
 }
 
-void printint(int flags, int width, int precision, int length, void *param, FILE *out)
+void printint(format_options options, void *param, FILE *out)
 {
   int *integer = (int *)param;
   char *str = ft_itoa(*integer);
   int i = 0;
-  if (flags & FLAG_ADDSIGN)
+  int strlen = 0;
+  if (options.flags & FLAG_ADDSIGN)
     ft_putchar_file(out, *integer > 0 ? '+' : '-');
-  if (flags & FLAG_ADDSPACE)
+  if (options.flags & FLAG_ADDSPACE)
     ft_putchar_file(out, ' ');
+  if (options.flags & FLAG_ADDZERO)
+    {
+      strlen = ft_strlen(str);
+      i = options.width - strlen;
+      while (i > 0)
+	{
+	  ft_putchar_file(out, '0');
+	  i--;
+	}
+    }
+  i = 0;
   while (str[i] != '\0')
     {
       ft_putchar_file(out, str[i]);
@@ -64,7 +89,7 @@ int hash(const char *c)
 }
 
 
-void inittypes(void (*types[])(int, int, int, int, void*, FILE *))
+void inittypes(void (*types[])(format_options, void*, FILE *))
 {
   types[hash("s")] = (void *)printstring;
   types[hash("d")] = (void *)printint;
@@ -72,20 +97,31 @@ void inittypes(void (*types[])(int, int, int, int, void*, FILE *))
 
 int ahprintf(FILE *out, const char *format, va_list args)
 {
-  void (*types[TYPE_COUNT])(int, int, int, int, void*, FILE *);
+  void (*types[TYPE_COUNT])(format_options, void*, FILE *);
   char ch;
   int i;
   int state;
-  int flags;
+  format_options options = {0};
+  int startdigit = 0;
 
   i = 0;
   state = NORMAL_MODE;
   inittypes(types);
   ch = format[i];
-  flags = 0;
   while (ch != '\0')
   {
-
+    if (state == FLAG_ZERO_MODE && ft_isdigit(ch) == 0)
+      {
+	options.width = ft_atoin(&format[startdigit], i);
+	state = FORMAT_MODE;
+      }
+    if (state == PRECISION_MODE && ft_isdigit(ch) == 0)
+      {
+	options.precision = ft_atoin(&format[startdigit], i);
+	
+	options.flags = options.flags | FLAG_PRECISION;
+	state = FORMAT_MODE;
+      }
     if (state == NORMAL_MODE && ch == '%')
       {
 	state = FORMAT_MODE;
@@ -98,15 +134,15 @@ int ahprintf(FILE *out, const char *format, va_list args)
     else if (state == FORMAT_MODE && ch == 's')
       {
 	const char *param = va_arg(args, const char*);
-	types[hash(&ch)](flags, 0, 0, 0, (void *)param, out);
-	flags = 0;
+	types[hash(&ch)](options, (void *)param, out);
+	options = (format_options){0};
 	state = NORMAL_MODE;
       }
     else if (state == FORMAT_MODE && ch == 'd')
       {
     	int param = va_arg(args, int);
-    	types[hash(&ch)](flags, 0, 0, 0, &param, out);
-	flags = 0;
+    	types[hash(&ch)](options, &param, out);
+	options = (format_options){0};
 	state = NORMAL_MODE;
       }
     else if (state == NORMAL_MODE)
@@ -115,19 +151,34 @@ int ahprintf(FILE *out, const char *format, va_list args)
       }
     else if (state == FORMAT_MODE && ch == FLAG_MINUS)
       {
-	flags = flags | FLAG_LEFTALIGN;
+	options.flags = options.flags | FLAG_LEFTALIGN;
       }
     else if (state == FORMAT_MODE && ch == FLAG_PLUS)
       {
-	flags = flags | FLAG_ADDSIGN;
+	options.flags = options.flags | FLAG_ADDSIGN;
       }
     else if (state == FORMAT_MODE && ch == FLAG_SPACE)
       {
-	flags = flags | FLAG_ADDSPACE;
+	options.flags = options.flags | FLAG_ADDSPACE;
       }
     else if (state == FORMAT_MODE && ch == FLAG_ZERO)
       {
-	flags = flags | FLAG_ADDZERO;
+	options.flags = options.flags | FLAG_ADDZERO;
+	state = FLAG_ZERO_MODE;
+	startdigit = i;
+      }
+    else if (state == FLAG_ZERO_MODE && ch == ft_isdigit(ch))
+      {
+	startdigit++;
+      }
+    else if (state == FORMAT_MODE && ch == PRECISION_DOT)
+      {
+	state = PRECISION_MODE;
+	startdigit = i + 1; //test to check if there's a digit
+      }
+    else if (state == PRECISION_MODE && ch == ft_isdigit(ch))
+      {
+	startdigit++;
       }
       i++;
     ch = format[i];

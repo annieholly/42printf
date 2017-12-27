@@ -43,6 +43,9 @@ int main()
   test_func("flag add sign test", "+10", "%+d", 10);
   test_func("flag add space test", " 10", "% d", 10);
   test_func("flag leading zero test", "0002", "%04d", 2);
+  test_func("flag leading zero test", "4000", "%03d", 4000);
+  test_func("string length test", "abc", "%.3s", "abcdefgh");
+  
   printf("\n");
   return (0);
 }
