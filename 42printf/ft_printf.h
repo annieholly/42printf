@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-void ahprintf(FILE *out, const char *format, va_list args);
+int ahprintf(FILE *out, const char *format, va_list args);
 void ft_putchar(char c);
 
 

@@ -1,5 +1,6 @@
-GCC=/usr/local/bin/gcc-7
+CC='cc'
+INCLUDES='libftah/'
 
 test: test.c ft_printf.c
-	$GCC test.c ft_printf.c libft.c -o test
+	$(CC) -I $(INCLUDES) test.c ft_printf.c $(INCLUDES)/*.c -o test
 	./test
