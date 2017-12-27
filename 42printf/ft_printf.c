@@ -4,11 +4,18 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define TYPE_COUNT 52
+#define TYPE_COUNT 127
 #define FORMAT_MODE 1
 #define NORMAL_MODE 0
 #define FLAG_ZERO_MODE 2
 #define PRECISION_MODE 3
+#define LENGTH_MODE 4
+#define LENGTH_CHAR 'h'
+#define LENGTH_LONG 'l'
+#define LENGTH_DOUBLE 'L'
+#define LENGTH_SIZET 'z'
+#define LENGTH_INTMAX 'j'
+#define LENGTH_PTR 't'
 #define PRECISION_DOT '.'
 #define FLAG_MINUS '-'
 #define FLAG_PLUS '+'
@@ -27,7 +34,7 @@ typedef struct s_format
   int flags;
   int width;
   int precision;
-  int length;
+  char length[3];
 } format_options;
 
 void ft_putchar_file(FILE *fd, char c)
@@ -36,10 +43,10 @@ void ft_putchar_file(FILE *fd, char c)
 }
 
 
-int printstring(format_options options, void *param, FILE *out)
+int printstring(format_options options, va_list args, FILE *out)
 {
   int i;
-  char *string = (char *)param;
+  char *string = va_arg(args, char*);
   int strlen = ft_strlen(string);
   i = 0;
   if (options.flags & FLAG_PRECISION)
@@ -52,16 +59,18 @@ int printstring(format_options options, void *param, FILE *out)
   return strlen;
 }
 
-int printint(format_options options, void *param, FILE *out)
+
+int printlong(format_options options, va_list args, FILE *out)
 {
-  int *integer = (int *)param;
-  char *str = ft_itoa(*integer);
+  long int longnum = va_arg(args, long int);
+  char *str = ft_ltoa(longnum);
   int i = 0;
   int count = 0;
   int strlen = 0;
+
   if (options.flags & FLAG_ADDSIGN)
     {
-      ft_putchar_file(out, *integer > 0 ? '+' : '-');
+      ft_putchar_file(out, longnum > 0 ? '+' : '-');
       count++;
     }
 
@@ -81,6 +90,7 @@ int printint(format_options options, void *param, FILE *out)
 	  count++;
 	}
     }
+  
   i = 0;
   while (str[i] != '\0')
     {
@@ -93,9 +103,62 @@ int printint(format_options options, void *param, FILE *out)
   return count;
 }
 
-int printfloat(format_options options, void *param, FILE *out)
+
+
+int printint(format_options options, va_list args, FILE *out)
 {
-  float n = *(float *)param;
+  int integer;
+  char *str;
+  int i = 0;
+  int count = 0;
+  int strlen = 0;
+
+  if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
+    {
+      return printlong(options, args, out);
+    }
+
+  integer = va_arg(args, int);
+  str = ft_itoa(integer);
+
+  if (options.flags & FLAG_ADDSIGN)
+    {
+      ft_putchar_file(out, integer > 0 ? '+' : '-');
+      count++;
+    }
+
+  if (options.flags & FLAG_ADDSPACE)
+    {
+      ft_putchar_file(out, ' ');
+      count++;
+    }
+  if (options.flags & FLAG_ADDZERO)
+    {
+      strlen = ft_strlen(str);
+      i = options.width - strlen;
+      while (i > 0)
+	{
+	  ft_putchar_file(out, '0');
+	  i--;
+	  count++;
+	}
+    }
+  
+  i = 0;
+  while (str[i] != '\0')
+    {
+      ft_putchar_file(out, str[i]);
+      i++;
+      count++;
+    }
+
+  free(str);
+  return count;
+}
+
+int printfloat(format_options options, va_list args, FILE *out)
+{
+  float n = (float)va_arg(args, double);
   int precision = 6;
   int strlen = 0;
   int i = 0;
@@ -146,26 +209,35 @@ int printfloat(format_options options, void *param, FILE *out)
 
 int hash(const char *c)
 {
-  return *c % TYPE_COUNT;
+  return *c;
 }
 
 
-void inittypes(int (*types[])(format_options, void*, FILE *))
+void inittypes(int (*types[])(format_options, va_list, FILE *))
 {
   types[hash("s")] = printstring;
   types[hash("d")] = printint;
   types[hash("f")] = printfloat;
 }
 
+int islengthmod(char ch)
+{
+  if (ch == LENGTH_CHAR || ch == LENGTH_LONG || ch == LENGTH_DOUBLE ||
+      ch == LENGTH_SIZET || ch == LENGTH_INTMAX || ch == LENGTH_PTR)
+    return (1);
+  return (0);
+}
+
 int ahprintf(FILE *out, const char *format, va_list args)
 {
-  int (*types[TYPE_COUNT])(format_options, void*, FILE *);
+  int (*types[TYPE_COUNT])(format_options, va_list, FILE *) = {0};
   char ch;
   int i;
   int count = 0;
   int state;
   format_options options = {0};
   int startdigit = 0;
+  int (*typefunc)(format_options, va_list, FILE *) = 0;
 
   i = 0;
   state = NORMAL_MODE;
@@ -184,6 +256,19 @@ int ahprintf(FILE *out, const char *format, va_list args)
 	options.flags = options.flags | FLAG_PRECISION;
 	state = FORMAT_MODE;
       }
+    if (state == LENGTH_MODE && islengthmod(ch) == 0)
+      {
+	options.length[0] = format[startdigit];
+	if ((i - startdigit) > 1)
+	  {
+	    options.length[1] = format[startdigit + 1];
+	    options.length[2] = '\0';
+	  }
+	else
+	  options.length[1] = '\0';
+
+	state = FORMAT_MODE;
+      }
     if (state == NORMAL_MODE && ch == '%')
       {
 	state = FORMAT_MODE;
@@ -193,24 +278,9 @@ int ahprintf(FILE *out, const char *format, va_list args)
 	ft_putchar_file(out, ch);
 	state = NORMAL_MODE;
       }
-    else if (state == FORMAT_MODE && ch == 's')
+    else if (state == FORMAT_MODE && (typefunc = types[hash(&ch)]) != 0)
       {
-	const char *param = va_arg(args, const char*);
-	count += types[hash(&ch)](options, (void *)param, out);
-	options = (format_options){0};
-	state = NORMAL_MODE;
-      }
-    else if (state == FORMAT_MODE && ch == 'd')
-      {
-    	int param = va_arg(args, int);
-    	count += types[hash(&ch)](options, &param, out);
-	options = (format_options){0};
-	state = NORMAL_MODE;
-      }
-    else if (state == FORMAT_MODE && ch == 'f')
-      {
-    	float param = (float)va_arg(args, double);
-    	count += types[hash(&ch)](options, &param, out);
+	count += typefunc(options, args, out);
 	options = (format_options){0};
 	state = NORMAL_MODE;
       }
@@ -248,6 +318,16 @@ int ahprintf(FILE *out, const char *format, va_list args)
       }
     else if (state == PRECISION_MODE && ch == ft_isdigit(ch))
       {
+	startdigit++;
+      }
+    else if (state == FORMAT_MODE && islengthmod(ch))
+      {
+	state = LENGTH_MODE;
+	startdigit = i;
+      }
+    else if (state == LENGTH_MODE && islengthmod(ch))
+      {
+	//may need to check for char length - max is 2
 	startdigit++;
       }
       i++;

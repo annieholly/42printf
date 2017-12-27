@@ -49,6 +49,10 @@ int main()
   test_func("float leading zero test", "03.14", "%05.2f", 3.14372371);
   test_func("float add space test", " 10.21", "% .2f", 10.21);
   test_func("float add sign test", "+10.21", "%+.2f", 10.21);
+
+  long int d = 31415926535;
+  test_func("long integer test", "31415926535", "%ld", d);
+
   printf("\n");
   return (0);
 }
