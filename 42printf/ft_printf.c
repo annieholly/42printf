@@ -170,7 +170,15 @@ int printfloat(format_options options, va_list args, FILE *out)
       precision = options.precision;
     }
 
-  str = ft_ftoa(n, precision);
+  if (options.flags & FLAG_ADDHASH)
+    {
+      str = ft_ftoa(n, precision, 1);
+    }
+  else
+    {
+      str = ft_ftoa(n, precision, 0);
+    }
+  
   strlen = ft_strlen(str);
 
   if (options.flags & FLAG_ADDSIGN)
@@ -196,6 +204,7 @@ int printfloat(format_options options, va_list args, FILE *out)
 	}
     }
 
+  
   i = 0;
   while (i < strlen)
     {
@@ -329,6 +338,10 @@ int ahprintf(FILE *out, const char *format, va_list args)
       {
 	//may need to check for char length - max is 2
 	startdigit++;
+      }
+    else if (state == FORMAT_MODE && ch == FLAG_HASH)
+      {
+	options.flags = options.flags | FLAG_ADDHASH;
       }
       i++;
     ch = format[i];

@@ -52,7 +52,10 @@ int main()
 
   long int d = 31415926535;
   test_func("long integer test", "31415926535", "%ld", d);
+  test_func("hash hex test", "0XA1", "%#X", 161);
+  test_func("hash float test", "42.", "%#.0f", 42.0);
 
+  
   printf("\n");
   return (0);
 }
