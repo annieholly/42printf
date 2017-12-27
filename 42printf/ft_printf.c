@@ -349,3 +349,10 @@ int ahprintf(FILE *out, const char *format, va_list args)
   ft_putchar_file(out, '\0');
   return count;
 }
+
+int ft_printf(const char * format, ...)
+{
+  va_list args;
+  va_start(args, format);
+  return ahprintf(stdout, format, args);
+}

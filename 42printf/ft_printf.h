@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 int ahprintf(FILE *out, const char *format, va_list args);
-void ft_putchar(char c);
+int ft_printf(const char *format, ...);
 
 
 
