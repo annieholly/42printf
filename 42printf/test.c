@@ -31,8 +31,6 @@ void test_func(char *description, char *correctoutput, char *text, ...)
     }
 }
 
-
-
 int main()
 {
   test_func("integer test", "9", "%d", 9);
@@ -49,11 +47,19 @@ int main()
   test_func("float leading zero test", "03.14", "%05.2f", 3.14372371);
   test_func("float add space test", " 10.21", "% .2f", 10.21);
   test_func("float add sign test", "+10.21", "%+.2f", 10.21);
-
+  
   long int d = 31415926535;
   test_func("long integer test", "31415926535", "%ld", d);
-  test_func("hash hex test", "0XA1", "%#X", 161);
   test_func("hash float test", "42.", "%#.0f", 42.0);
+  test_func("hash hex lower test - input: 16000", "3e80", "%x", 16000);
+  test_func("hash hex upper test - input: 16000", "3E80", "%X", 16000);
+  test_func("hash hex test - input: 161", "0XA1", "%#X", 161);
+
+  int num;
+  test_func("test stored number of chars", "hello", "hello%n", &num);
+  test_func("test stored number of chars int", "5", "%d", num);
+  
+
 
   
   printf("\n");

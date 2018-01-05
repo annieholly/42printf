@@ -35,13 +35,14 @@ typedef struct s_format
   int width;
   int precision;
   char length[3];
+  char type;
+  int	chcount;
 } format_options;
 
 void ft_putchar_file(FILE *fd, char c)
 {
   write(fileno(fd), &c, sizeof(char));
 }
-
 
 int printstring(format_options options, va_list args, FILE *out)
 {
@@ -58,7 +59,6 @@ int printstring(format_options options, va_list args, FILE *out)
   }
   return strlen;
 }
-
 
 int printlong(format_options options, va_list args, FILE *out)
 {
@@ -100,10 +100,9 @@ int printlong(format_options options, va_list args, FILE *out)
     }
 
   free(str);
+
   return count;
 }
-
-
 
 int printint(format_options options, va_list args, FILE *out)
 {
@@ -114,9 +113,7 @@ int printint(format_options options, va_list args, FILE *out)
   int strlen = 0;
 
   if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
-    {
       return printlong(options, args, out);
-    }
 
   integer = va_arg(args, int);
   str = ft_itoa(integer);
@@ -166,19 +163,13 @@ int printfloat(format_options options, va_list args, FILE *out)
   char *str;
 
   if (options.flags & FLAG_PRECISION)
-    {
       precision = options.precision;
-    }
-
-  if (options.flags & FLAG_ADDHASH)
-    {
-      str = ft_ftoa(n, precision, 1);
-    }
-  else
-    {
-      str = ft_ftoa(n, precision, 0);
-    }
   
+  if (options.flags & FLAG_ADDHASH)
+      str = ft_ftoa(n, precision, 1);
+  else
+      str = ft_ftoa(n, precision, 0);
+
   strlen = ft_strlen(str);
 
   if (options.flags & FLAG_ADDSIGN)
@@ -203,7 +194,6 @@ int printfloat(format_options options, va_list args, FILE *out)
 	  count++;
 	}
     }
-
   
   i = 0;
   while (i < strlen)
@@ -216,17 +206,86 @@ int printfloat(format_options options, va_list args, FILE *out)
   return count;
 }
 
+int printhex(format_options options, va_list args, FILE *out)
+{
+  int integer;
+  char *str;
+  int i = 0;
+  int count = 0;
+  int strlen = 0;
+  int upper = 0;
+  int prepend = 0;
+
+  if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
+      return printlong(options, args, out);
+
+  integer = va_arg(args, int);
+  if (options.type == 'X')
+    upper = 1;
+  if (options.flags & FLAG_ADDHASH)
+    prepend = 1;
+  str = ft_itohex(integer, upper, prepend);
+
+  if (options.flags & FLAG_ADDSIGN)
+    {
+      ft_putchar_file(out, integer > 0 ? '+' : '-');
+      count++;
+    }
+
+  if (options.flags & FLAG_ADDSPACE)
+    {
+      ft_putchar_file(out, ' ');
+      count++;
+    }
+  if (options.flags & FLAG_ADDZERO)
+    {
+      strlen = ft_strlen(str);
+      i = options.width - strlen;
+      while (i > 0)
+	{
+	  ft_putchar_file(out, '0');
+	  i--;
+	  count++;
+	}
+    }
+  if (options.flags & FLAG_ADDHASH)
+    {
+      
+    }
+  i = 0;
+  while (str[i] != '\0')
+    {
+      ft_putchar_file(out, str[i]);
+      i++;
+      count++;
+    }
+
+  free(str);
+  return count;
+}
+
+int printn(format_options options, va_list args, FILE *out)
+{
+  int *ptr;
+  ptr = va_arg(args, int*);
+  *ptr = options.chcount;
+  return (0);
+}
+
+
 int hash(const char *c)
 {
   return *c;
 }
-
 
 void inittypes(int (*types[])(format_options, va_list, FILE *))
 {
   types[hash("s")] = printstring;
   types[hash("d")] = printint;
   types[hash("f")] = printfloat;
+  types[hash("x")] = printhex;
+  types[hash("X")] = printhex;
+  types[hash("n")] = printn;
 }
 
 int islengthmod(char ch)
@@ -289,6 +348,8 @@ int ahprintf(FILE *out, const char *format, va_list args)
       }
     else if (state == FORMAT_MODE && (typefunc = types[hash(&ch)]) != 0)
       {
+	options.type = ch;
+	options.chcount = count;
 	count += typefunc(options, args, out);
 	options = (format_options){0};
 	state = NORMAL_MODE;
