@@ -44,6 +44,14 @@ void ft_putchar_file(FILE *fd, char c)
   write(fileno(fd), &c, sizeof(char));
 }
 
+int printchar(format_options options, va_list args, FILE * out)
+{
+	int i; 
+	char c = va_arg(args, int);
+	ft_putchar_file(out, c);
+	return (1);
+}
+
 int printstring(format_options options, va_list args, FILE *out)
 {
   int i;
@@ -104,6 +112,58 @@ int printlong(format_options options, va_list args, FILE *out)
   return count;
 }
 
+int printunsignedint(format_options options, va_list args, FILE *out)
+{
+  int integer;
+  char *str;
+  int i = 0;
+  int count = 0;
+  int strlen = 0;
+
+  if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
+      return printlong(options, args, out);
+
+  integer = va_arg(args, unsigned int);
+
+  str = ft_unsigneditoa(integer);
+
+  if (options.flags & FLAG_ADDSIGN)
+    {
+      ft_putchar_file(out, integer > 0 ? '+' : '-');
+      count++;
+    }
+
+  if (options.flags & FLAG_ADDSPACE)
+    {
+      ft_putchar_file(out, ' ');
+      count++;
+    }
+  if (options.flags & FLAG_ADDZERO)
+    {
+      strlen = ft_strlen(str);
+      i = options.width - strlen;
+      while (i > 0)
+	{
+	  ft_putchar_file(out, '0');
+	  i--;
+	  count++;
+	}
+    }
+  
+  i = 0;
+  while (str[i] != '\0')
+    {
+      ft_putchar_file(out, str[i]);
+      i++;
+      count++;
+    }
+
+  free(str);
+  return count;
+}
+
+
+
 int printint(format_options options, va_list args, FILE *out)
 {
   int integer;
@@ -152,6 +212,7 @@ int printint(format_options options, va_list args, FILE *out)
   free(str);
   return count;
 }
+
 
 int printfloat(format_options options, va_list args, FILE *out)
 {
@@ -264,6 +325,130 @@ int printhex(format_options options, va_list args, FILE *out)
   return count;
 }
 
+int printptr(format_options options, va_list args, FILE *out)
+{
+  int integer;
+  char *str;
+  int i = 0;
+  int count = 0;
+  int strlen = 0;
+  int upper = 0;
+  int prepend = 0;
+
+  if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
+      return printlong(options, args, out);
+
+  void *ptr;
+  ptr = va_arg(args, void *);
+
+  unsigned long long int ptr_num; 
+  ptr_num = (unsigned long long int)ptr;
+
+  if (options.type == 'X')
+    upper = 1;
+  if (options.flags & FLAG_ADDHASH)
+    prepend = 1;
+  str = ft_uitohex(ptr_num, upper, 1);
+
+  if (options.flags & FLAG_ADDSIGN)
+    {
+      ft_putchar_file(out, integer > 0 ? '+' : '-');
+      count++;
+    }
+
+  if (options.flags & FLAG_ADDSPACE)
+    {
+      ft_putchar_file(out, ' ');
+      count++;
+    }
+  if (options.flags & FLAG_ADDZERO)
+    {
+      strlen = ft_strlen(str);
+      i = options.width - strlen;
+      while (i > 0)
+	{
+	  ft_putchar_file(out, '0');
+	  i--;
+	  count++;
+	}
+    }
+  if (options.flags & FLAG_ADDHASH)
+    {
+      
+    }
+  i = 0;
+  while (str[i] != '\0')
+    {
+      ft_putchar_file(out, str[i]);
+      i++;
+      count++;
+    }
+
+  free(str);
+  return count;
+}
+
+
+
+int printoctal(format_options options, va_list args, FILE *out)
+{
+  int integer;
+  char *str;
+  int i = 0;
+  int count = 0;
+  int strlen = 0;
+  int upper = 0;
+  int prepend = 0;
+
+  if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
+      return printlong(options, args, out);
+
+  integer = va_arg(args, int);
+  if (options.type == 'X')
+    upper = 1;
+  if (options.flags & FLAG_ADDHASH)
+    prepend = 1;
+  str = ft_itooct(integer);
+
+  if (options.flags & FLAG_ADDSIGN)
+    {
+      ft_putchar_file(out, integer > 0 ? '+' : '-');
+      count++;
+    }
+
+  if (options.flags & FLAG_ADDSPACE)
+    {
+      ft_putchar_file(out, ' ');
+      count++;
+    }
+  if (options.flags & FLAG_ADDZERO)
+    {
+      strlen = ft_strlen(str);
+      i = options.width - strlen;
+      while (i > 0)
+	{
+	  ft_putchar_file(out, '0');
+	  i--;
+	  count++;
+	}
+    }
+  if (options.flags & FLAG_ADDHASH)
+    {
+      
+    }
+  i = 0;
+  while (str[i] != '\0')
+    {
+      ft_putchar_file(out, str[i]);
+      i++;
+      count++;
+    }
+
+  free(str);
+  return count;
+}
+
+
 int printn(format_options options, va_list args, FILE *out)
 {
   int *ptr;
@@ -280,12 +465,18 @@ int hash(const char *c)
 
 void inittypes(int (*types[])(format_options, va_list, FILE *))
 {
-  types[hash("s")] = printstring;
-  types[hash("d")] = printint;
-  types[hash("f")] = printfloat;
-  types[hash("x")] = printhex;
-  types[hash("X")] = printhex;
-  types[hash("n")] = printn;
+	types[hash("c")] = printchar;
+	types[hash("s")] = printstring;
+	types[hash("p")] = printptr;
+	types[hash("d")] = printint;
+	types[hash("i")] = printint;
+	types[hash("o")] = printoctal;
+	types[hash("u")] = printunsignedint;
+	types[hash("f")] = printfloat;
+	types[hash("x")] = printhex;
+	types[hash("X")] = printhex;
+	types[hash("n")] = printn;
+
 }
 
 int islengthmod(char ch)

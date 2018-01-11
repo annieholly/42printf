@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include "ft_printf.h"
 #include <string.h>
+#include <locale.h>
 
 #define TEST_FUNC ahprintf
 
@@ -58,10 +59,33 @@ int main()
   int num;
   test_func("test stored number of chars", "hello", "hello%n", &num);
   test_func("test stored number of chars int", "5", "%d", num);
-  
+
+  test_func("char test", "c", "%c", 'c');
+  test_func("integer alias test", "123456", "%i", 123456);
+  test_func("unsigned int test", "123456", "%u", 123456);
+  test_func("unsigned int test", "4294843840", "%u", -123456);
+  test_func("octal test", "6212", "%o", 3210);
+
+  char a = 'a';
+  char addressbuf[512];
+  sprintf(addressbuf, "%p", &a);
+  test_func("pointer test", addressbuf, "%p", &a);
 
 
+//WIDE CHAR TEST
+/*
+  setlocale(LC_CTYPE, "");
+  test_func("test wide char", "Ñ", "%lc", L'Ñ');
+  test_func("test wide char string", "あああ", "%ls", L"あああ");
+
+//  test_func("wide char test", "@", "%lc", 'L@');
+
+  ft_printf("1 ft: %C\n", L'@');
+  printf("2 pf: %C\n", L'AAA');
+
+  printf("3 pf: %lc\n", L'@@');
   
   printf("\n");
+*/
   return (0);
 }
