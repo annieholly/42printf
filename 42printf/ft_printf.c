@@ -4,40 +4,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#define TYPE_COUNT 127
-#define FORMAT_MODE 1
-#define NORMAL_MODE 0
-#define FLAG_ZERO_MODE 2
-#define PRECISION_MODE 3
-#define LENGTH_MODE 4
-#define LENGTH_CHAR 'h'
-#define LENGTH_LONG 'l'
-#define LENGTH_DOUBLE 'L'
-#define LENGTH_SIZET 'z'
-#define LENGTH_INTMAX 'j'
-#define LENGTH_PTR 't'
-#define PRECISION_DOT '.'
-#define FLAG_MINUS '-'
-#define FLAG_PLUS '+'
-#define FLAG_SPACE ' '
-#define FLAG_ZERO '0'
-#define FLAG_HASH '#'
-#define FLAG_LEFTALIGN 1
-#define FLAG_ADDSIGN 2
-#define FLAG_ADDSPACE 4
-#define FLAG_ADDZERO 8
-#define FLAG_ADDHASH 16
-#define FLAG_PRECISION 32
-
-typedef struct s_format
-{
-  int flags;
-  int width;
-  int precision;
-  char length[3];
-  char type;
-  int	chcount;
-} format_options;
 
 void ft_putchar_file(FILE *fd, char c)
 {
@@ -68,102 +34,6 @@ int printstring(format_options options, va_list args, FILE *out)
   return strlen;
 }
 
-int printlong(format_options options, va_list args, FILE *out)
-{
-  long int longnum = va_arg(args, long int);
-  char *str = ft_ltoa(longnum);
-  int i = 0;
-  int count = 0;
-  int strlen = 0;
-
-  if (options.flags & FLAG_ADDSIGN)
-    {
-      ft_putchar_file(out, longnum > 0 ? '+' : '-');
-      count++;
-    }
-
-  if (options.flags & FLAG_ADDSPACE)
-    {
-      ft_putchar_file(out, ' ');
-      count++;
-    }
-  if (options.flags & FLAG_ADDZERO)
-    {
-      strlen = ft_strlen(str);
-      i = options.width - strlen;
-      while (i > 0)
-	{
-	  ft_putchar_file(out, '0');
-	  i--;
-	  count++;
-	}
-    }
-  
-  i = 0;
-  while (str[i] != '\0')
-    {
-      ft_putchar_file(out, str[i]);
-      i++;
-      count++;
-    }
-
-  free(str);
-
-  return count;
-}
-
-int printunsignedint(format_options options, va_list args, FILE *out)
-{
-  int integer;
-  char *str;
-  int i = 0;
-  int count = 0;
-  int strlen = 0;
-
-  if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
-      return printlong(options, args, out);
-
-  integer = va_arg(args, unsigned int);
-
-  str = ft_unsigneditoa(integer);
-
-  if (options.flags & FLAG_ADDSIGN)
-    {
-      ft_putchar_file(out, integer > 0 ? '+' : '-');
-      count++;
-    }
-
-  if (options.flags & FLAG_ADDSPACE)
-    {
-      ft_putchar_file(out, ' ');
-      count++;
-    }
-  if (options.flags & FLAG_ADDZERO)
-    {
-      strlen = ft_strlen(str);
-      i = options.width - strlen;
-      while (i > 0)
-	{
-	  ft_putchar_file(out, '0');
-	  i--;
-	  count++;
-	}
-    }
-  
-  i = 0;
-  while (str[i] != '\0')
-    {
-      ft_putchar_file(out, str[i]);
-      i++;
-      count++;
-    }
-
-  free(str);
-  return count;
-}
-
-
-
 int printint(format_options options, va_list args, FILE *out)
 {
   int integer;
@@ -174,6 +44,9 @@ int printint(format_options options, va_list args, FILE *out)
 
   if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
       return printlong(options, args, out);
+ 
+  if (ft_strlen(options.length) == 1 && options.length[0] == 'h') 
+	  return printshort(options, args, out);
 
   integer = va_arg(args, int);
   str = ft_itoa(integer);
@@ -222,6 +95,10 @@ int printfloat(format_options options, va_list args, FILE *out)
   int i = 0;
   int count = 0;
   char *str;
+
+
+  if (ft_strlen(options.length) == 1 && options.length[0] == 'L')
+      return printlongdouble(options, args, out);
 
   if (options.flags & FLAG_PRECISION)
       precision = options.precision;
@@ -476,7 +353,6 @@ void inittypes(int (*types[])(format_options, va_list, FILE *))
 	types[hash("x")] = printhex;
 	types[hash("X")] = printhex;
 	types[hash("n")] = printn;
-
 }
 
 int islengthmod(char ch)
@@ -489,10 +365,10 @@ int islengthmod(char ch)
 
 int ahprintf(FILE *out, const char *format, va_list args)
 {
-  int (*types[TYPE_COUNT])(format_options, va_list, FILE *) = {0};
-  char ch;
-  int i;
-  int count = 0;
+	int (*types[TYPE_COUNT])(format_options, va_list, FILE *) = {0};
+	char ch;
+	int i;
+	int count = 0;
   int state;
   format_options options = {0};
   int startdigit = 0;
@@ -505,51 +381,50 @@ int ahprintf(FILE *out, const char *format, va_list args)
   while (ch != '\0')
   {
     if (state == FLAG_ZERO_MODE && ft_isdigit(ch) == 0)
-      {
-	options.width = ft_atoin(&format[startdigit], i);
-	state = FORMAT_MODE;
-      }
-    if (state == PRECISION_MODE && ft_isdigit(ch) == 0)
-      {
-	options.precision = ft_atoin(&format[startdigit], i);
-	options.flags = options.flags | FLAG_PRECISION;
-	state = FORMAT_MODE;
-      }
-    if (state == LENGTH_MODE && islengthmod(ch) == 0)
-      {
-	options.length[0] = format[startdigit];
-	if ((i - startdigit) > 1)
-	  {
-	    options.length[1] = format[startdigit + 1];
-	    options.length[2] = '\0';
-	  }
-	else
-	  options.length[1] = '\0';
-
-	state = FORMAT_MODE;
-      }
+	{
+		options.width = ft_atoin(&format[startdigit], i);
+		state = FORMAT_MODE;
+	}
+	if (state == PRECISION_MODE && ft_isdigit(ch) == 0)
+	{
+		options.precision = ft_atoin(&format[startdigit], i);
+		options.flags = options.flags | FLAG_PRECISION;
+		state = FORMAT_MODE;
+	}
+	if (state == LENGTH_MODE && islengthmod(ch) == 0)
+	{
+		options.length[0] = format[startdigit];
+		if ((i - startdigit) > 1)
+		{
+			options.length[1] = format[startdigit + 1];
+			options.length[2] = '\0';
+		}
+		else
+			options.length[1] = '\0';
+		state = FORMAT_MODE;
+	}
     if (state == NORMAL_MODE && ch == '%')
-      {
-	state = FORMAT_MODE;
-      }
-    else if (state == FORMAT_MODE && ch == '%')
-      {
-	ft_putchar_file(out, ch);
-	state = NORMAL_MODE;
-      }
+	{
+		state = FORMAT_MODE;
+	}
+	else if (state == FORMAT_MODE && ch == '%')
+	{
+		ft_putchar_file(out, ch);
+		state = NORMAL_MODE;
+	}
     else if (state == FORMAT_MODE && (typefunc = types[hash(&ch)]) != 0)
-      {
-	options.type = ch;
-	options.chcount = count;
-	count += typefunc(options, args, out);
-	options = (format_options){0};
-	state = NORMAL_MODE;
-      }
+	{
+		options.type = ch;
+		options.chcount = count;
+		count += typefunc(options, args, out);
+		options = (format_options){0};
+		state = NORMAL_MODE;
+	}
     else if (state == NORMAL_MODE)
-      {
-	ft_putchar_file(out, ch);
-	count++;
-      }
+	{
+		ft_putchar_file(out, ch);
+		count++;
+	}
     else if (state == FORMAT_MODE && ch == FLAG_MINUS)
       {
 	options.flags = options.flags | FLAG_LEFTALIGN;

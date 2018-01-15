@@ -71,6 +71,8 @@ int main()
   sprintf(addressbuf, "%p", &a);
   test_func("pointer test", addressbuf, "%p", &a);
 
+  test_func("short int 'h' length modifier test", "-7616", "%hd", 123456);  
+  test_func("long double 'Lf' test", "1234567890.1234567889", "%.10Lf", 1234567890.1234567890L);
 
 //WIDE CHAR TEST
 /*
