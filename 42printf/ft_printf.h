@@ -6,11 +6,12 @@
 #include <stdio.h>
 
 #define TYPE_COUNT 127
-#define FORMAT_MODE 1
 #define NORMAL_MODE 0
+#define FORMAT_MODE 1
 #define FLAG_ZERO_MODE 2
 #define PRECISION_MODE 3
 #define LENGTH_MODE 4
+#define WIDTH_MODE 5
 #define LENGTH_CHAR 'h'
 #define LENGTH_LONG 'l'
 #define LENGTH_DOUBLE 'L'
@@ -29,6 +30,7 @@
 #define FLAG_ADDZERO 8
 #define FLAG_ADDHASH 16
 #define FLAG_PRECISION 32
+#define FLAG_WIDTH 64
 
 
 typedef struct s_format

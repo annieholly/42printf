@@ -4,26 +4,55 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stddef.h>
+#include <wchar.h>
 
 void ft_putchar_file(FILE *fd, char c)
 {
   write(fileno(fd), &c, sizeof(char));
 }
 
-int printchar(format_options options, va_list args, FILE * out)
+void ft_putwidechar_file(FILE *fd, wchar_t wc)
+{
+	write(fileno(fd), &wc, sizeof(wchar_t));
+}
+
+int printwidechar(format_options options, va_list args, FILE *out) 
+{
+	int i;
+	wchar_t widechar = va_arg(args, wchar_t);
+
+	char str[100] = va_arg(args, char*);
+	
+	printf("str: %s\n", str);
+	printf("arg: %lc\n", va_arg(args, wchar_t));
+
+	printf("lc test - %lc\n", L'Ñ');
+	printf("print wc - %lc\n", widechar);
+
+	ft_putwidechar_file(out, widechar);
+	return (1);
+}
+
+
+int printchar(format_options options, va_list args, FILE *out)
 {
 	int i; 
 	char c = va_arg(args, int);
+
+	if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
+		return printwidechar(options, args, out);
+
 	ft_putchar_file(out, c);
 	return (1);
 }
 
 int printstring(format_options options, va_list args, FILE *out)
 {
-  int i;
-  char *string = va_arg(args, char*);
-  int strlen = ft_strlen(string);
-  i = 0;
+	int i;
+	char *string = va_arg(args, char*);
+	int strlen = ft_strlen(string);
+	i = 0;
   if (options.flags & FLAG_PRECISION)
     strlen = options.precision;
   while (i < strlen)
@@ -36,44 +65,87 @@ int printstring(format_options options, va_list args, FILE *out)
 
 int printint(format_options options, va_list args, FILE *out)
 {
-  int integer;
-  char *str;
-  int i = 0;
-  int count = 0;
-  int strlen = 0;
+	int integer;
+	char *str;
+	int i = 0;
+	int count = 0;
+	int strlen = 0;
+	int width_rem = 0;
+	int intlen = 0;
+	int precision_rem = 0;
 
-  if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
-      return printlong(options, args, out);
- 
-  if (ft_strlen(options.length) == 1 && options.length[0] == 'h') 
-	  return printshort(options, args, out);
+	if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
+		return printlong(options, args, out);
 
-  integer = va_arg(args, int);
-  str = ft_itoa(integer);
+	if (ft_strlen(options.length) == 1 && options.length[0] == 'h')
+		return printshort(options, args, out);
 
-  if (options.flags & FLAG_ADDSIGN)
-    {
-      ft_putchar_file(out, integer > 0 ? '+' : '-');
-      count++;
-    }
+	integer = va_arg(args, int);
+	str = ft_itoa(integer);
+	intlen = ft_strlen(str);
+	precision_rem = options.precision - intlen;
+
+	if (options.flags & FLAG_WIDTH) 
+	{
+		if (options.width > intlen) 
+		{
+			width_rem = options.width - intlen;
+			while (width_rem > 0) 
+			{
+				ft_putchar_file(out, ' ');
+				width_rem--;
+				count++;
+			}
+		}
+	}
+
+	if (options.flags & FLAG_ADDSIGN)
+	{
+		ft_putchar_file(out, integer > 0 ? '+' : '-');
+		count++;
+	}
 
   if (options.flags & FLAG_ADDSPACE)
     {
       ft_putchar_file(out, ' ');
       count++;
     }
+
   if (options.flags & FLAG_ADDZERO)
     {
-      strlen = ft_strlen(str);
-      i = options.width - strlen;
-      while (i > 0)
-	{
-	  ft_putchar_file(out, '0');
-	  i--;
-	  count++;
+		strlen = ft_strlen(str);
+		i = options.width - strlen;
+		if (options.flags & FLAG_PRECISION)
+		{
+			i = 0;
+			width_rem = options.width - options.precision; 
+			while (width_rem > 0) 
+			{
+				ft_putchar_file(out, ' ');
+				width_rem--;
+				count++;
+			}
+		}
+		while (i > 0)
+		{
+			ft_putchar_file(out, '0');
+			i--;
+			count++;
+		}
 	}
-    }
-  
+ 
+
+  if (options.flags & FLAG_PRECISION) 
+  {
+	  while (precision_rem > 0)
+	  {
+		  ft_putchar_file(out, '0');
+		  precision_rem--;
+		  count++;
+	  }
+  }
+
+
   i = 0;
   while (str[i] != '\0')
     {
@@ -223,6 +295,7 @@ int printptr(format_options options, va_list args, FILE *out)
 
   if (options.type == 'X')
     upper = 1;
+
   if (options.flags & FLAG_ADDHASH)
     prepend = 1;
   str = ft_uitohex(ptr_num, upper, 1);
@@ -369,112 +442,147 @@ int ahprintf(FILE *out, const char *format, va_list args)
 	char ch;
 	int i;
 	int count = 0;
-  int state;
-  format_options options = {0};
-  int startdigit = 0;
-  int (*typefunc)(format_options, va_list, FILE *) = 0;
+	int state;
+	format_options options = {0};
+	int startdigit = 0;
+	int (*typefunc)(format_options, va_list, FILE *) = 0;
 
-  i = 0;
-  state = NORMAL_MODE;
-  inittypes(types);
-  ch = format[i];
-  while (ch != '\0')
-  {
-    if (state == FLAG_ZERO_MODE && ft_isdigit(ch) == 0)
+	i = 0;
+	state = NORMAL_MODE;
+	inittypes(types);
+	ch = format[i];
+	while (ch != '\0')
 	{
-		options.width = ft_atoin(&format[startdigit], i);
-		state = FORMAT_MODE;
-	}
-	if (state == PRECISION_MODE && ft_isdigit(ch) == 0)
-	{
-		options.precision = ft_atoin(&format[startdigit], i);
-		options.flags = options.flags | FLAG_PRECISION;
-		state = FORMAT_MODE;
-	}
-	if (state == LENGTH_MODE && islengthmod(ch) == 0)
-	{
-		options.length[0] = format[startdigit];
-		if ((i - startdigit) > 1)
+		if (state == FLAG_ZERO_MODE && ft_isdigit(ch) == 0)
 		{
-			options.length[1] = format[startdigit + 1];
-			options.length[2] = '\0';
+			options.width = ft_atoin(&format[startdigit], i);
+			state = FORMAT_MODE;
 		}
-		else
-			options.length[1] = '\0';
-		state = FORMAT_MODE;
+		
+		if (state == WIDTH_MODE && ft_isdigit(ch) == 0)
+		{
+			options.width = ft_atoin(&format[startdigit], i);
+			state = FORMAT_MODE;
+		}
+
+		if (state == PRECISION_MODE && ft_isdigit(ch) == 0)
+		{
+			options.precision = ft_atoin(&format[startdigit], i);
+			options.flags = options.flags | FLAG_PRECISION;
+			state = FORMAT_MODE;
+		}
+
+		if (state == LENGTH_MODE && islengthmod(ch) == 0)
+		{
+			options.length[0] = format[startdigit];
+			if ((i - startdigit) > 1)
+			{
+				options.length[1] = format[startdigit + 1];
+				options.length[2] = '\0';
+			}
+			else
+				options.length[1] = '\0';
+			state = FORMAT_MODE;
+		}
+
+		if (state == NORMAL_MODE && ch == '%')
+		{
+			state = FORMAT_MODE;
+		}
+
+		else if (state == FORMAT_MODE && ch == '%')
+		{
+			ft_putchar_file(out, ch);
+			state = NORMAL_MODE;
+		}
+
+		else if (state == FORMAT_MODE && (typefunc = types[hash(&ch)]) != 0)
+		{
+			options.type = ch;
+			options.chcount = count;
+			count += typefunc(options, args, out);
+			options = (format_options){0};
+			state = NORMAL_MODE;
+		}
+
+		else if (state == NORMAL_MODE)
+		{
+			ft_putchar_file(out, ch);
+			count++;
+		}
+
+		else if (state == FORMAT_MODE && ch == FLAG_MINUS)
+		{
+			options.flags = options.flags | FLAG_LEFTALIGN;
+		}
+
+		else if (state == FORMAT_MODE && ch == FLAG_PLUS)
+		{
+			options.flags = options.flags | FLAG_ADDSIGN;
+		}
+
+		else if (state == FORMAT_MODE && ch == FLAG_SPACE)
+		{
+			options.flags = options.flags | FLAG_ADDSPACE;
+		}
+
+		else if (state == FORMAT_MODE && ch == FLAG_ZERO)
+		{
+			options.flags = options.flags | FLAG_ADDZERO;
+			state = FLAG_ZERO_MODE;
+			startdigit = i;
+		}
+
+		else if (state == FLAG_ZERO_MODE && ch == ft_isdigit(ch))
+		{
+			startdigit++;
+		}
+/*
+		else if (state == WIDTH_MODE && ft_isdigit(ch))
+		{
+			printf("in width mode \n");
+			startdigit++;
+		}
+*/
+		else if (state == FORMAT_MODE && ch == PRECISION_DOT)
+		{
+			state = PRECISION_MODE;
+			startdigit = i + 1; //test to check if there's a digit
+		}
+
+		else if (state == PRECISION_MODE && ch == ft_isdigit(ch))
+		{
+			startdigit++;
+		}
+
+		else if (state == FORMAT_MODE && islengthmod(ch))
+		{
+			state = LENGTH_MODE;
+			startdigit = i;
+		}
+
+		else if (state == LENGTH_MODE && islengthmod(ch))
+		{
+			//may need to check for char length - max is 2
+			startdigit++;
+		}
+
+		else if (state == FORMAT_MODE && ch == FLAG_HASH)
+		{
+			options.flags = options.flags | FLAG_ADDHASH;
+		}
+
+		else if (state == FORMAT_MODE && ft_isdigit(ch) && ch != '0')
+		{
+			state = WIDTH_MODE;
+			options.flags = options.flags | FLAG_WIDTH;
+			startdigit = i;
+		}
+		i++;
+		ch = format[i];
 	}
-    if (state == NORMAL_MODE && ch == '%')
-	{
-		state = FORMAT_MODE;
-	}
-	else if (state == FORMAT_MODE && ch == '%')
-	{
-		ft_putchar_file(out, ch);
-		state = NORMAL_MODE;
-	}
-    else if (state == FORMAT_MODE && (typefunc = types[hash(&ch)]) != 0)
-	{
-		options.type = ch;
-		options.chcount = count;
-		count += typefunc(options, args, out);
-		options = (format_options){0};
-		state = NORMAL_MODE;
-	}
-    else if (state == NORMAL_MODE)
-	{
-		ft_putchar_file(out, ch);
-		count++;
-	}
-    else if (state == FORMAT_MODE && ch == FLAG_MINUS)
-      {
-	options.flags = options.flags | FLAG_LEFTALIGN;
-      }
-    else if (state == FORMAT_MODE && ch == FLAG_PLUS)
-      {
-	options.flags = options.flags | FLAG_ADDSIGN;
-      }
-    else if (state == FORMAT_MODE && ch == FLAG_SPACE)
-      {
-	options.flags = options.flags | FLAG_ADDSPACE;
-      }
-    else if (state == FORMAT_MODE && ch == FLAG_ZERO)
-      {
-	options.flags = options.flags | FLAG_ADDZERO;
-	state = FLAG_ZERO_MODE;
-	startdigit = i;
-      }
-    else if (state == FLAG_ZERO_MODE && ch == ft_isdigit(ch))
-      {
-	startdigit++;
-      }
-    else if (state == FORMAT_MODE && ch == PRECISION_DOT)
-      {
-	state = PRECISION_MODE;
-	startdigit = i + 1; //test to check if there's a digit
-      }
-    else if (state == PRECISION_MODE && ch == ft_isdigit(ch))
-      {
-	startdigit++;
-      }
-    else if (state == FORMAT_MODE && islengthmod(ch))
-      {
-	state = LENGTH_MODE;
-	startdigit = i;
-      }
-    else if (state == LENGTH_MODE && islengthmod(ch))
-      {
-	//may need to check for char length - max is 2
-	startdigit++;
-      }
-    else if (state == FORMAT_MODE && ch == FLAG_HASH)
-      {
-	options.flags = options.flags | FLAG_ADDHASH;
-      }
-      i++;
-    ch = format[i];
-  }
-  ft_putchar_file(out, '\0');
-  return count;
+	ft_putchar_file(out, '\0');
+	return count;
 }
 
 int ft_printf(const char * format, ...)

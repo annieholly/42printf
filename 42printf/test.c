@@ -72,22 +72,25 @@ int main()
   test_func("pointer test", addressbuf, "%p", &a);
 
   test_func("short int 'h' length modifier test", "-7616", "%hd", 123456);  
+
   test_func("long double 'Lf' test", "1234567890.1234567889", "%.10Lf", 1234567890.1234567890L);
 
+  test_func("padding test", "   28", "%5d", 28);
+  test_func("width and precision test", " 0028", "%05.4d", 28);
+
 //WIDE CHAR TEST
-/*
   setlocale(LC_CTYPE, "");
   test_func("test wide char", "Ñ", "%lc", L'Ñ');
   test_func("test wide char string", "あああ", "%ls", L"あああ");
 
 //  test_func("wide char test", "@", "%lc", 'L@');
 
-  ft_printf("1 ft: %C\n", L'@');
-  printf("2 pf: %C\n", L'AAA');
+//  ft_printf("1 ft: %C\n", L'@');
+//  printf("2 pf: %C\n", L'AAA');
 
-  printf("3 pf: %lc\n", L'@@');
+//  printf("3 pf: %lc\n", L'@@');
   
-  printf("\n");
-*/
+//  printf("\n");
+
   return (0);
 }
