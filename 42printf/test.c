@@ -6,7 +6,7 @@
 
 #define TEST_FUNC ahprintf
 
-void test_func(char *description, char *correctoutput, char *text, ...)
+int test_func(char *description, char *correctoutput, char *text, ...)
 {
   FILE *fp;
   int nchars;
@@ -30,6 +30,7 @@ void test_func(char *description, char *correctoutput, char *text, ...)
     {
       printf(".\n");
     }
+  return (nchars);
 }
 
 int main()
@@ -79,10 +80,61 @@ int main()
   test_func("width and precision test", " 0028", "%05.4d", 28);
 
 //WIDE CHAR TEST
-  setlocale(LC_CTYPE, "");
-  test_func("test wide char", "Ñ", "%lc", L'Ñ');
-  test_func("test wide char string", "あああ", "%ls", L"あああ");
+//  setlocale(LC_CTYPE, "");
+//  wchar_t wc = 266;
+  int wc_ret;
+  wc_ret = test_func("wide char - %C", "A", "%C", L'A');
+  if (wc_ret == 1) 
+	  printf(".\n");
+  else
+	  printf("wc return failed - return: %d\n", wc_ret);
 
+  wc_ret = test_func("wide char return", "", "%C", 256);
+  if (wc_ret == -1) 
+	  printf(".\n");
+  else
+	  printf("wc return failed - return: %d\n", wc_ret);
+
+  wc_ret = test_func("wide char - %lc", "A", "%lc", L'A');
+  if (wc_ret == 1) 
+	  printf(".\n");
+  else
+	  printf("wc return failed - return: %d\n", wc_ret);
+
+  wc_ret = test_func("wide char return", "", "%lc", 256);
+  if (wc_ret == -1) 
+	  printf(".\n");
+  else
+	  printf("wc return failed - return: %d\n", wc_ret);
+
+
+//  test_func("test wide char string", "あああ", "%ls", L"あああ");
+//  printf("%s\n", setlocale(LC_CTYPE, NULL));
+
+/*
+  int i = 0;
+  int ret = 0;
+  printf("*** BEGIN TEST ***\n");
+  while (i <= 256)
+  {
+	  ret = printf("%C", i++);
+	  printf(" - Return code: %d\n", ret);
+  }
+*/
+
+/*
+  i = printf("%C\n", 42);
+  printf("Return code: %d\n", i);
+
+  i = printf("%C\n", 129);
+  printf("Return code: %d\n", i);
+
+  i = printf("%C\n", 266);
+  printf("Return code: %d\n", i);
+  printf("\n");
+*/
+//wchar_t wc = L'a';
+//write(1, &wc, 4);
 //  test_func("wide char test", "@", "%lc", 'L@');
 
 //  ft_printf("1 ft: %C\n", L'@');

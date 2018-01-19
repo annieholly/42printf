@@ -4,8 +4,8 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
-#include <wchar.h>
+//#include <stddef.h>
+//#include <wchar.h>
 
 void ft_putchar_file(FILE *fd, char c)
 {
@@ -17,20 +17,21 @@ void ft_putwidechar_file(FILE *fd, wchar_t wc)
 	write(fileno(fd), &wc, sizeof(wchar_t));
 }
 
+void ft_putunsignedchar(unsigned long int wc)
+{
+	write(1, &wc, 4);
+}
+
 int printwidechar(format_options options, va_list args, FILE *out) 
 {
 	int i;
-	wchar_t widechar = va_arg(args, wchar_t);
+	int wc_int;
+	char wc;
 
-	char str[100] = va_arg(args, char*);
-	
-	printf("str: %s\n", str);
-	printf("arg: %lc\n", va_arg(args, wchar_t));
-
-	printf("lc test - %lc\n", L'Ñ');
-	printf("print wc - %lc\n", widechar);
-
-	ft_putwidechar_file(out, widechar);
+	if ((wc_int = va_arg(args, int)) > 255)
+		return (-1);
+	wc = (char)wc_int;
+	ft_putchar_file(out, wc);
 	return (1);
 }
 
@@ -416,6 +417,7 @@ int hash(const char *c)
 void inittypes(int (*types[])(format_options, va_list, FILE *))
 {
 	types[hash("c")] = printchar;
+	types[hash("C")] = printwidechar;
 	types[hash("s")] = printstring;
 	types[hash("p")] = printptr;
 	types[hash("d")] = printint;
