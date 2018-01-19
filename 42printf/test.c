@@ -52,6 +52,7 @@ int main()
   
   long int d = 31415926535;
   test_func("long integer test", "31415926535", "%ld", d);
+  test_func("long integer test", "31415926535", "%D", d);
   test_func("hash float test", "42.", "%#.0f", 42.0);
   test_func("hash hex lower test - input: 16000", "3e80", "%x", 16000);
   test_func("hash hex upper test - input: 16000", "3E80", "%X", 16000);
@@ -64,8 +65,13 @@ int main()
   test_func("char test", "c", "%c", 'c');
   test_func("integer alias test", "123456", "%i", 123456);
   test_func("unsigned int test", "123456", "%u", 123456);
+  test_func("unsigned long int test", "4294967295", "%lu", 4294967295);
+  test_func("unsigned long int test", "4294967295", "%U", 4294967295); 
   test_func("unsigned int test", "4294843840", "%u", -123456);
+
   test_func("octal test", "6212", "%o", 3210);
+  test_func("%lo octal test", "6212", "%lo", 3210);
+  test_func("%lo octal test", "6212", "%O", 3210);
 
   char a = 'a';
   char addressbuf[512];
@@ -78,6 +84,8 @@ int main()
 
   test_func("padding test", "   28", "%5d", 28);
   test_func("width and precision test", " 0028", "%05.4d", 28);
+
+//  test_func("%ld", "", "%ld", );
 
 //WIDE CHAR TEST
 //  setlocale(LC_CTYPE, "");
@@ -107,42 +115,19 @@ int main()
   else
 	  printf("wc return failed - return: %d\n", wc_ret);
 
+  wc_ret = test_func("wide str - %S", "Apple", "%S", L"Apple");
+  if (wc_ret == 5) 
+	  printf(".\n");
+  else
+	  printf("wc return failed - return: %d\n", wc_ret);
 
-//  test_func("test wide char string", "あああ", "%ls", L"あああ");
-//  printf("%s\n", setlocale(LC_CTYPE, NULL));
-
-/*
-  int i = 0;
-  int ret = 0;
-  printf("*** BEGIN TEST ***\n");
-  while (i <= 256)
-  {
-	  ret = printf("%C", i++);
-	  printf(" - Return code: %d\n", ret);
-  }
-*/
-
-/*
-  i = printf("%C\n", 42);
-  printf("Return code: %d\n", i);
-
-  i = printf("%C\n", 129);
-  printf("Return code: %d\n", i);
-
-  i = printf("%C\n", 266);
-  printf("Return code: %d\n", i);
-  printf("\n");
-*/
-//wchar_t wc = L'a';
-//write(1, &wc, 4);
-//  test_func("wide char test", "@", "%lc", 'L@');
-
-//  ft_printf("1 ft: %C\n", L'@');
-//  printf("2 pf: %C\n", L'AAA');
-
-//  printf("3 pf: %lc\n", L'@@');
+  wc_ret = test_func("wide str - %S", "Apple", "%ls", L"Apple");
+  if (wc_ret == 5) 
+	  printf(".\n");
+  else
+	  printf("wc return failed - return: %d\n", wc_ret);
   
-//  printf("\n");
-
+ //  test_func("test wide char string", "あああ", "%ls", L"あああ");
+//  printf("%s\n", setlocale(LC_CTYPE, NULL));
   return (0);
 }

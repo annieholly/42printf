@@ -1,4 +1,4 @@
-#include "ft_printf.h"
+w#include "ft_printf.h"
 #include "libft.h"
 #include <stdarg.h>
 #include <unistd.h>
@@ -35,15 +35,39 @@ int printwidechar(format_options options, va_list args, FILE *out)
 	return (1);
 }
 
+int ft_wcstrlen(wchar_t *str) 
+{
+	int i; 
+	i = 0;
+	while (str[i] != '\0') 
+		i++; 
+	return (i);
+}
+
+
+int printwidestring(format_options options, va_list args, FILE *out) 
+{
+	int i;
+	wchar_t *wc_string = va_arg(args, wchar_t*);
+	int wclen = ft_wcstrlen(wc_string);
+	i = 0; 
+	while (i < wclen)
+	{
+		ft_putchar_file(out, wc_string[i]);
+		i++;
+	}
+	return (wclen);
+}
 
 int printchar(format_options options, va_list args, FILE *out)
 {
 	int i; 
-	char c = va_arg(args, int);
+	char c;
 
 	if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
 		return printwidechar(options, args, out);
 
+	c = va_arg(args, int);
 	ft_putchar_file(out, c);
 	return (1);
 }
@@ -51,9 +75,15 @@ int printchar(format_options options, va_list args, FILE *out)
 int printstring(format_options options, va_list args, FILE *out)
 {
 	int i;
-	char *string = va_arg(args, char*);
-	int strlen = ft_strlen(string);
+	char *string;
+	int strlen;
+
+	if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
+		return printwidestring(options, args, out);
+
 	i = 0;
+	string = va_arg(args, char*);
+	strlen = ft_strlen(string);
   if (options.flags & FLAG_PRECISION)
     strlen = options.precision;
   while (i < strlen)
@@ -343,7 +373,7 @@ int printptr(format_options options, va_list args, FILE *out)
 
 int printoctal(format_options options, va_list args, FILE *out)
 {
-  int integer;
+  unsigned int output;
   char *str;
   int i = 0;
   int count = 0;
@@ -352,18 +382,18 @@ int printoctal(format_options options, va_list args, FILE *out)
   int prepend = 0;
 
   if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
-      return printlong(options, args, out);
+      output = va_arg(args, unsigned long int);
+  else
+	  output = va_arg(args, int);
 
-  integer = va_arg(args, int);
-  if (options.type == 'X')
-    upper = 1;
   if (options.flags & FLAG_ADDHASH)
     prepend = 1;
-  str = ft_itooct(integer);
+
+  str = ft_itooct((int)output);
 
   if (options.flags & FLAG_ADDSIGN)
     {
-      ft_putchar_file(out, integer > 0 ? '+' : '-');
+      ft_putchar_file(out, output > 0 ? '+' : '-');
       count++;
     }
 
@@ -419,11 +449,15 @@ void inittypes(int (*types[])(format_options, va_list, FILE *))
 	types[hash("c")] = printchar;
 	types[hash("C")] = printwidechar;
 	types[hash("s")] = printstring;
+	types[hash("S")] = printwidestring;
 	types[hash("p")] = printptr;
 	types[hash("d")] = printint;
+	types[hash("D")] = printlong;
 	types[hash("i")] = printint;
 	types[hash("o")] = printoctal;
+	types[hash("O")] = printoctal;
 	types[hash("u")] = printunsignedint;
+	types[hash("U")] = printunsignedint;
 	types[hash("f")] = printfloat;
 	types[hash("x")] = printhex;
 	types[hash("X")] = printhex;
