@@ -1,4 +1,4 @@
-w#include "ft_printf.h"
+#include "ft_printf.h"
 #include "libft.h"
 #include <stdarg.h>
 #include <unistd.h>
@@ -12,14 +12,14 @@ void ft_putchar_file(FILE *fd, char c)
   write(fileno(fd), &c, sizeof(char));
 }
 
+void ft_putcharnum_file(FILE *fd, signed char c)
+{
+  write(fileno(fd), &c, sizeof(signed char));
+}
+
 void ft_putwidechar_file(FILE *fd, wchar_t wc)
 {
 	write(fileno(fd), &wc, sizeof(wchar_t));
-}
-
-void ft_putunsignedchar(unsigned long int wc)
-{
-	write(1, &wc, 4);
 }
 
 int printwidechar(format_options options, va_list args, FILE *out) 
@@ -72,6 +72,28 @@ int printchar(format_options options, va_list args, FILE *out)
 	return (1);
 }
 
+int printsignedchar(format_options options, va_list args, FILE *out)
+{
+	int i; 
+	int count;
+	char c;
+	char *str;
+
+	count = 0;
+	c = va_arg(args, int);
+	str = ft_itoa(c);
+
+	i = 0;
+	while (str[i] != '\0')
+    {
+      ft_putchar_file(out, str[i]);
+      i++;
+      count++;
+    }
+	free(str);
+	return (count);
+}
+
 int printstring(format_options options, va_list args, FILE *out)
 {
 	int i;
@@ -108,8 +130,14 @@ int printint(format_options options, va_list args, FILE *out)
 	if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
 		return printlong(options, args, out);
 
+	if (ft_strlen(options.length) == 2 && options.length[1] == 'l')
+		return printlonglong(options, args, out);
+
 	if (ft_strlen(options.length) == 1 && options.length[0] == 'h')
 		return printshort(options, args, out);
+
+	if (ft_strlen(options.length) == 2 && options.length[1] == 'h')
+		return printsignedchar(options, args, out);
 
 	integer = va_arg(args, int);
 	str = ft_itoa(integer);
@@ -548,19 +576,13 @@ int ahprintf(FILE *out, const char *format, va_list args)
 		}
 
 		else if (state == FORMAT_MODE && ch == FLAG_MINUS)
-		{
 			options.flags = options.flags | FLAG_LEFTALIGN;
-		}
 
 		else if (state == FORMAT_MODE && ch == FLAG_PLUS)
-		{
 			options.flags = options.flags | FLAG_ADDSIGN;
-		}
 
 		else if (state == FORMAT_MODE && ch == FLAG_SPACE)
-		{
 			options.flags = options.flags | FLAG_ADDSPACE;
-		}
 
 		else if (state == FORMAT_MODE && ch == FLAG_ZERO)
 		{
@@ -600,7 +622,7 @@ int ahprintf(FILE *out, const char *format, va_list args)
 		else if (state == LENGTH_MODE && islengthmod(ch))
 		{
 			//may need to check for char length - max is 2
-			startdigit++;
+			//startdigit++;
 		}
 
 		else if (state == FORMAT_MODE && ch == FLAG_HASH)

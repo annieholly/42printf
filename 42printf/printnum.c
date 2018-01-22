@@ -45,6 +45,50 @@ int printlong(format_options options, va_list args, FILE *out)
   return count;
 }
 
+int printlonglong(format_options options, va_list args, FILE *out)
+{
+  long long int num = va_arg(args, long long int);
+  char *str = ft_lltoa(num);
+  int i = 0;
+  int count = 0;
+  int strlen = 0;
+
+  if (options.flags & FLAG_ADDSIGN)
+    {
+      ft_putchar_file(out, num > 0 ? '+' : '-');
+      count++;
+    }
+
+  if (options.flags & FLAG_ADDSPACE)
+    {
+      ft_putchar_file(out, ' ');
+      count++;
+    }
+  if (options.flags & FLAG_ADDZERO)
+    {
+      strlen = ft_strlen(str);
+      i = options.width - strlen;
+      while (i > 0)
+	{
+	  ft_putchar_file(out, '0');
+	  i--;
+	  count++;
+	}
+    }
+  
+  i = 0;
+  while (str[i] != '\0')
+    {
+      ft_putchar_file(out, str[i]);
+      i++;
+      count++;
+    }
+
+  free(str);
+
+  return count;
+}
+
 int printshort(format_options options, va_list args, FILE *out)
 {
   short int shortnum = va_arg(args, int);

@@ -24,7 +24,7 @@ int test_func(char *description, char *correctoutput, char *text, ...)
 
   if (strcmp(buf, correctoutput) != 0)
     {
-      printf("Test %s failed: %s != %s\n", description, buf, correctoutput);
+      printf("Test: %s failed: %s != %s\n", description, buf, correctoutput);
     }
   else
     {
@@ -52,6 +52,7 @@ int main()
   
   long int d = 31415926535;
   test_func("long integer test", "31415926535", "%ld", d);
+  test_func("%lld", "31415926535", "%lld", d);
   test_func("long integer test", "31415926535", "%D", d);
   test_func("hash float test", "42.", "%#.0f", 42.0);
   test_func("hash hex lower test - input: 16000", "3e80", "%x", 16000);
@@ -79,11 +80,15 @@ int main()
   test_func("pointer test", addressbuf, "%p", &a);
 
   test_func("short int 'h' length modifier test", "-7616", "%hd", 123456);  
+  test_func(" %hhd length modifier", "64", "%hhd", 123456);  
+
 
   test_func("long double 'Lf' test", "1234567890.1234567889", "%.10Lf", 1234567890.1234567890L);
 
   test_func("padding test", "   28", "%5d", 28);
   test_func("width and precision test", " 0028", "%05.4d", 28);
+
+  test_func("unsigned long long", "4294967295", "%u", 4294967295);
 
 //  test_func("%ld", "", "%ld", );
 
