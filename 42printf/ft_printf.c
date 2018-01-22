@@ -127,17 +127,24 @@ int printint(format_options options, va_list args, FILE *out)
 	int intlen = 0;
 	int precision_rem = 0;
 
-	if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
-		return printlong(options, args, out);
-
-	if (ft_strlen(options.length) == 2 && options.length[1] == 'l')
-		return printlonglong(options, args, out);
 
 	if (ft_strlen(options.length) == 1 && options.length[0] == 'h')
 		return printshort(options, args, out);
 
 	if (ft_strlen(options.length) == 2 && options.length[1] == 'h')
 		return printsignedchar(options, args, out);
+
+	if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
+		return printlong(options, args, out);
+
+	if (ft_strlen(options.length) == 2 && options.length[1] == 'l')
+		return printlonglong(options, args, out);
+
+	if (ft_strlen(options.length) == 1 && options.length[0] == 'j')
+		return printintmax_t(options, args, out);
+
+	if (ft_strlen(options.length) == 1 && options.length[0] == 'z')
+		return printsize_t(options, args, out);
 
 	integer = va_arg(args, int);
 	str = ft_itoa(integer);

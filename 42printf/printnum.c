@@ -1,5 +1,6 @@
 #include "libft.h"
 #include "ft_printf.h"
+#include <inttypes.h> 
 
 int printlong(format_options options, va_list args, FILE *out)
 {
@@ -12,6 +13,94 @@ int printlong(format_options options, va_list args, FILE *out)
   if (options.flags & FLAG_ADDSIGN)
     {
       ft_putchar_file(out, longnum > 0 ? '+' : '-');
+      count++;
+    }
+
+  if (options.flags & FLAG_ADDSPACE)
+    {
+      ft_putchar_file(out, ' ');
+      count++;
+    }
+  if (options.flags & FLAG_ADDZERO)
+    {
+      strlen = ft_strlen(str);
+      i = options.width - strlen;
+      while (i > 0)
+	{
+	  ft_putchar_file(out, '0');
+	  i--;
+	  count++;
+	}
+    }
+  
+  i = 0;
+  while (str[i] != '\0')
+    {
+      ft_putchar_file(out, str[i]);
+      i++;
+      count++;
+    }
+
+  free(str);
+
+  return count;
+}
+
+int printintmax_t(format_options options, va_list args, FILE *out)
+{
+  intmax_t num = va_arg(args, intmax_t);
+  char *str = ft_jtoa(num);
+  int i = 0;
+  int count = 0;
+  int strlen = 0;
+
+  if (options.flags & FLAG_ADDSIGN)
+    {
+      ft_putchar_file(out, num > 0 ? '+' : '-');
+      count++;
+    }
+
+  if (options.flags & FLAG_ADDSPACE)
+    {
+      ft_putchar_file(out, ' ');
+      count++;
+    }
+  if (options.flags & FLAG_ADDZERO)
+    {
+      strlen = ft_strlen(str);
+      i = options.width - strlen;
+      while (i > 0)
+	{
+	  ft_putchar_file(out, '0');
+	  i--;
+	  count++;
+	}
+    }
+  
+  i = 0;
+  while (str[i] != '\0')
+    {
+      ft_putchar_file(out, str[i]);
+      i++;
+      count++;
+    }
+
+  free(str);
+
+  return count;
+}
+
+int printsize_t(format_options options, va_list args, FILE *out)
+{
+  size_t num = va_arg(args, size_t);
+  char *str = ft_ztoa(num);
+  int i = 0;
+  int count = 0;
+  int strlen = 0;
+
+  if (options.flags & FLAG_ADDSIGN)
+    {
+      ft_putchar_file(out, num > 0 ? '+' : '-');
       count++;
     }
 

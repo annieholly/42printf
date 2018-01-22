@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #define TYPE_COUNT 127
 #define NORMAL_MODE 0
@@ -49,7 +50,9 @@ int ft_printf(const char *format, ...);
 void ft_putchar_file(FILE *fd, char c);
 
 int printlong(format_options options, va_list args, FILE *out);
-int printlonglong(format_options options, va_list args, FILE *out)
+int printlonglong(format_options options, va_list args, FILE *out);
+int printintmax_t(format_options options, va_list args, FILE *out);
+int printsize_t(format_options options, va_list args, FILE *out);
 int printshort(format_options options, va_list args, FILE *out);
 int printunsignedint(format_options options, va_list args, FILE *out);
 

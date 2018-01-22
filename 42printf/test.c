@@ -51,9 +51,12 @@ int main()
   test_func("float add sign test", "+10.21", "%+.2f", 10.21);
   
   long int d = 31415926535;
-  test_func("long integer test", "31415926535", "%ld", d);
-  test_func("%lld", "31415926535", "%lld", d);
-  test_func("long integer test", "31415926535", "%D", d);
+  test_func("%ld long int test", "31415926535", "%ld", d);
+  test_func("%lld long long int", "31415926535", "%lld", (long long int)d);
+  test_func("%D long long int alias", "31415926535", "%D", (long long int)d);
+  test_func("%jd intmax_t", "31415926535", "%jd", (intmax_t)d);  
+  test_func("%zd size_t", "31415926535", "%zd", (size_t)d);  
+
   test_func("hash float test", "42.", "%#.0f", 42.0);
   test_func("hash hex lower test - input: 16000", "3e80", "%x", 16000);
   test_func("hash hex upper test - input: 16000", "3E80", "%X", 16000);
@@ -66,8 +69,8 @@ int main()
   test_func("char test", "c", "%c", 'c');
   test_func("integer alias test", "123456", "%i", 123456);
   test_func("unsigned int test", "123456", "%u", 123456);
-  test_func("unsigned long int test", "4294967295", "%lu", 4294967295);
-  test_func("unsigned long int test", "4294967295", "%U", 4294967295); 
+  test_func("%lu", "4294967295", "%lu", 4294967295);
+  test_func("%U", "4294967295", "%U", 4294967295); 
   test_func("unsigned int test", "4294843840", "%u", -123456);
 
   test_func("octal test", "6212", "%o", 3210);
