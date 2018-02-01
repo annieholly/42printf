@@ -35,20 +35,21 @@ int test_func(char *description, char *correctoutput, char *text, ...)
 
 int main()
 {
-  test_func("integer test", "9", "%d", 9);
-  test_func("should pass", "foo", "foo");
-  test_func("string test", "foo", "%s", "foo");
-  test_func("flag left align test", "foo", "%-s", "foo");
-  test_func("flag add sign test", "+10", "%+d", 10);
-  test_func("flag add space test", " 10", "% d", 10);
-  test_func("flag leading zero test", "0002", "%04d", 2);
-  test_func("flag leading zero test", "4000", "%03d", 4000);
-  test_func("string length test", "abc", "%.3s", "abcdefgh");
-  test_func("float test", "42.500000", "%f", 42.5);
-  test_func("float precision test", "3.14", "%.2f", 3.14372371);
-  test_func("float leading zero test", "03.14", "%05.2f", 3.14372371);
-  test_func("float add space test", " 10.21", "% .2f", 10.21);
-  test_func("float add sign test", "+10.21", "%+.2f", 10.21);
+	test_func("%", "%", "%%");
+	test_func("integer test", "9", "%d", 9);
+	test_func("should pass", "foo", "foo");
+	test_func("string test", "foo", "%s", "foo");
+	test_func("flag left align test", "foo", "%-s", "foo");
+	test_func("flag add sign test", "+10", "%+d", 10);
+	test_func("flag add space test", " 10", "% d", 10);
+	test_func("flag leading zero test", "0002", "%04d", 2);
+	test_func("flag leading zero test", "4000", "%03d", 4000);
+	test_func("string length test", "abc", "%.3s", "abcdefgh");
+	test_func("float test", "42.500000", "%f", 42.5);
+	test_func("float precision test", "3.14", "%.2f", 3.14372371);
+	test_func("float leading zero test", "03.14", "%05.2f", 3.14372371);
+	test_func("float add space test", " 10.21", "% .2f", 10.21);
+	test_func("float add sign test", "+10.21", "%+.2f", 10.21);
   
   long int d = 31415926535;
   test_func("%ld long int test", "31415926535", "%ld", d);
@@ -92,6 +93,15 @@ int main()
   test_func("width and precision test", " 0028", "%05.4d", 28);
 
   test_func("unsigned long long", "4294967295", "%u", 4294967295);
+
+/*
+  int numarray[] = {100, 2, 50};
+  int *ptr_x = numarray; 
+  int *ptr_y = numarray + 1;
+  int *ptr_z = numarray + 2;
+
+  test_func("%td ptrdiff_t", "2", "%td", ptr_z - ptr_x);
+*/
 
 //  test_func("%ld", "", "%ld", );
 

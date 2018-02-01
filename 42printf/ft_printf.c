@@ -22,7 +22,7 @@ void ft_putwidechar_file(FILE *fd, wchar_t wc)
 	write(fileno(fd), &wc, sizeof(wchar_t));
 }
 
-int printwidechar(format_options options, va_list args, FILE *out) 
+int printwidechar(t_format options, va_list args, FILE *out) 
 {
 	int i;
 	int wc_int;
@@ -45,7 +45,7 @@ int ft_wcstrlen(wchar_t *str)
 }
 
 
-int printwidestring(format_options options, va_list args, FILE *out) 
+int printwidestring(t_format options, va_list args, FILE *out) 
 {
 	int i;
 	wchar_t *wc_string = va_arg(args, wchar_t*);
@@ -59,7 +59,7 @@ int printwidestring(format_options options, va_list args, FILE *out)
 	return (wclen);
 }
 
-int printchar(format_options options, va_list args, FILE *out)
+int printchar(t_format options, va_list args, FILE *out)
 {
 	int i; 
 	char c;
@@ -72,7 +72,7 @@ int printchar(format_options options, va_list args, FILE *out)
 	return (1);
 }
 
-int printsignedchar(format_options options, va_list args, FILE *out)
+int printsignedchar(t_format options, va_list args, FILE *out)
 {
 	int i; 
 	int count;
@@ -94,7 +94,7 @@ int printsignedchar(format_options options, va_list args, FILE *out)
 	return (count);
 }
 
-int printstring(format_options options, va_list args, FILE *out)
+int printstring(t_format options, va_list args, FILE *out)
 {
 	int i;
 	char *string;
@@ -116,7 +116,7 @@ int printstring(format_options options, va_list args, FILE *out)
   return strlen;
 }
 
-int printint(format_options options, va_list args, FILE *out)
+int printint(t_format options, va_list args, FILE *out)
 {
 	int integer;
 	char *str;
@@ -126,7 +126,6 @@ int printint(format_options options, va_list args, FILE *out)
 	int width_rem = 0;
 	int intlen = 0;
 	int precision_rem = 0;
-
 
 	if (ft_strlen(options.length) == 1 && options.length[0] == 'h')
 		return printshort(options, args, out);
@@ -225,7 +224,7 @@ int printint(format_options options, va_list args, FILE *out)
 }
 
 
-int printfloat(format_options options, va_list args, FILE *out)
+int printfloat(t_format options, va_list args, FILE *out)
 {
   float n = (float)va_arg(args, double);
   int precision = 6;
@@ -282,7 +281,7 @@ int printfloat(format_options options, va_list args, FILE *out)
   return count;
 }
 
-int printhex(format_options options, va_list args, FILE *out)
+int printhex(t_format options, va_list args, FILE *out)
 {
   int integer;
   char *str;
@@ -340,7 +339,7 @@ int printhex(format_options options, va_list args, FILE *out)
   return count;
 }
 
-int printptr(format_options options, va_list args, FILE *out)
+int printptr(t_format options, va_list args, FILE *out)
 {
   int integer;
   char *str;
@@ -406,7 +405,7 @@ int printptr(format_options options, va_list args, FILE *out)
 
 
 
-int printoctal(format_options options, va_list args, FILE *out)
+int printoctal(t_format options, va_list args, FILE *out)
 {
   unsigned int output;
   char *str;
@@ -465,7 +464,7 @@ int printoctal(format_options options, va_list args, FILE *out)
 }
 
 
-int printn(format_options options, va_list args, FILE *out)
+int printn(t_format options, va_list args, FILE *out)
 {
   int *ptr;
   ptr = va_arg(args, int*);
@@ -479,7 +478,7 @@ int hash(const char *c)
   return *c;
 }
 
-void inittypes(int (*types[])(format_options, va_list, FILE *))
+void inittypes(int (*types[])(t_format, va_list, FILE *))
 {
 	types[hash("c")] = printchar;
 	types[hash("C")] = printwidechar;
@@ -507,16 +506,17 @@ int islengthmod(char ch)
   return (0);
 }
 
+/*
 int ahprintf(FILE *out, const char *format, va_list args)
 {
-	int (*types[TYPE_COUNT])(format_options, va_list, FILE *) = {0};
-	char ch;
-	int i;
-	int count = 0;
-	int state;
-	format_options options = {0};
+	int (*types[TYPE_COUNT])(t_format, va_list, FILE *) = {0};
+	char ch; //1
+	int i; //2
+	int count = 0; //3
+	int state; 
+	t_format options = {0};
 	int startdigit = 0;
-	int (*typefunc)(format_options, va_list, FILE *) = 0;
+	int (*typefunc)(t_format, va_list, FILE *) = 0;
 
 	i = 0;
 	state = NORMAL_MODE;
@@ -525,7 +525,7 @@ int ahprintf(FILE *out, const char *format, va_list args)
 	while (ch != '\0')
 	{
 		if (state == FLAG_ZERO_MODE && ft_isdigit(ch) == 0)
-		{
+	 	{
 			options.width = ft_atoin(&format[startdigit], i);
 			state = FORMAT_MODE;
 		}
@@ -572,7 +572,7 @@ int ahprintf(FILE *out, const char *format, va_list args)
 			options.type = ch;
 			options.chcount = count;
 			count += typefunc(options, args, out);
-			options = (format_options){0};
+			options = (t_format){0};
 			state = NORMAL_MODE;
 		}
 
@@ -602,13 +602,7 @@ int ahprintf(FILE *out, const char *format, va_list args)
 		{
 			startdigit++;
 		}
-/*
-		else if (state == WIDTH_MODE && ft_isdigit(ch))
-		{
-			printf("in width mode \n");
-			startdigit++;
-		}
-*/
+
 		else if (state == FORMAT_MODE && ch == PRECISION_DOT)
 		{
 			state = PRECISION_MODE;
@@ -649,6 +643,7 @@ int ahprintf(FILE *out, const char *format, va_list args)
 	ft_putchar_file(out, '\0');
 	return count;
 }
+*/
 
 int ft_printf(const char * format, ...)
 {

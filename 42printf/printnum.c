@@ -2,7 +2,7 @@
 #include "ft_printf.h"
 #include <inttypes.h> 
 
-int printlong(format_options options, va_list args, FILE *out)
+int printlong(t_format options, va_list args, FILE *out)
 {
   long int longnum = va_arg(args, long int);
   char *str = ft_ltoa(longnum);
@@ -46,7 +46,7 @@ int printlong(format_options options, va_list args, FILE *out)
   return count;
 }
 
-int printintmax_t(format_options options, va_list args, FILE *out)
+int printintmax_t(t_format options, va_list args, FILE *out)
 {
   intmax_t num = va_arg(args, intmax_t);
   char *str = ft_jtoa(num);
@@ -90,7 +90,7 @@ int printintmax_t(format_options options, va_list args, FILE *out)
   return count;
 }
 
-int printsize_t(format_options options, va_list args, FILE *out)
+int printsize_t(t_format options, va_list args, FILE *out)
 {
   size_t num = va_arg(args, size_t);
   char *str = ft_ztoa(num);
@@ -134,7 +134,7 @@ int printsize_t(format_options options, va_list args, FILE *out)
   return count;
 }
 
-int printlonglong(format_options options, va_list args, FILE *out)
+int printlonglong(t_format options, va_list args, FILE *out)
 {
   long long int num = va_arg(args, long long int);
   char *str = ft_lltoa(num);
@@ -178,7 +178,7 @@ int printlonglong(format_options options, va_list args, FILE *out)
   return count;
 }
 
-int printshort(format_options options, va_list args, FILE *out)
+int printshort(t_format options, va_list args, FILE *out)
 {
   short int shortnum = va_arg(args, int);
   char *str = ft_itoa(shortnum);
@@ -223,7 +223,7 @@ int printshort(format_options options, va_list args, FILE *out)
 }
 
 
-int printunsignedint(format_options options, va_list args, FILE *out)
+int printunsignedint(t_format options, va_list args, FILE *out)
 {
   int integer;
   char *str;
@@ -273,7 +273,7 @@ int printunsignedint(format_options options, va_list args, FILE *out)
   return count;
 }
 
-int printlongdouble(format_options options, va_list args, FILE *out)
+int printlongdouble(t_format options, va_list args, FILE *out)
 {
   long double n = va_arg(args, long double);
   int precision = 6;
