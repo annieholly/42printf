@@ -106,14 +106,14 @@ int printstring(t_format options, va_list args, FILE *out)
 	i = 0;
 	string = va_arg(args, char*);
 	strlen = ft_strlen(string);
-  if (options.flags & FLAG_PRECISION)
-    strlen = options.precision;
-  while (i < strlen)
-  {
-    ft_putchar_file(out, string[i]);
-    i++;
-  }
-  return strlen;
+	if (options.flags & FLAG_PRECISION)
+		strlen = options.precision;
+	while (i < strlen)
+	{
+		ft_putchar_file(out, string[i]);
+		i++;
+	}
+	return strlen;
 }
 
 int printint(t_format options, va_list args, FILE *out)
@@ -127,21 +127,18 @@ int printint(t_format options, va_list args, FILE *out)
 	int intlen = 0;
 	int precision_rem = 0;
 
+//	printf("options.flags = %d\n", options.flags);
+
 	if (ft_strlen(options.length) == 1 && options.length[0] == 'h')
 		return printshort(options, args, out);
-
 	if (ft_strlen(options.length) == 2 && options.length[1] == 'h')
 		return printsignedchar(options, args, out);
-
 	if (ft_strlen(options.length) == 1 && options.length[0] == 'l')
 		return printlong(options, args, out);
-
 	if (ft_strlen(options.length) == 2 && options.length[1] == 'l')
 		return printlonglong(options, args, out);
-
 	if (ft_strlen(options.length) == 1 && options.length[0] == 'j')
 		return printintmax_t(options, args, out);
-
 	if (ft_strlen(options.length) == 1 && options.length[0] == 'z')
 		return printsize_t(options, args, out);
 
@@ -233,17 +230,14 @@ int printfloat(t_format options, va_list args, FILE *out)
   int count = 0;
   char *str;
 
-
   if (ft_strlen(options.length) == 1 && options.length[0] == 'L')
       return printlongdouble(options, args, out);
-
   if (options.flags & FLAG_PRECISION)
       precision = options.precision;
-  
   if (options.flags & FLAG_ADDHASH)
       str = ft_ftoa(n, precision, 1);
-  else
-      str = ft_ftoa(n, precision, 0);
+	  else
+		  str = ft_ftoa(n, precision, 0);
 
   strlen = ft_strlen(str);
 
@@ -468,6 +462,7 @@ int printn(t_format options, va_list args, FILE *out)
 {
   int *ptr;
   ptr = va_arg(args, int*);
+  printf("ch count: %d\n", options.chcount);
   *ptr = options.chcount;
   return (0);
 }
@@ -480,6 +475,7 @@ int hash(const char *c)
 
 void inittypes(int (*types[])(t_format, va_list, FILE *))
 {
+//	printf("inside inittypes\n");
 	types[hash("c")] = printchar;
 	types[hash("C")] = printwidechar;
 	types[hash("s")] = printstring;

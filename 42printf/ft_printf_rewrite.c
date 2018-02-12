@@ -3,295 +3,124 @@
 
 int is_special_char(char ch)
 {
-	if (ch == FLAG_MINUS || ch == FLAG_PLUS || ch == FLAG_SPACE || ch == FLAG_ZERO) 
+	if (ch == FLAG_MINUS || ch == FLAG_PLUS || ch == FLAG_SPACE || ch == FLAG_ZERO ||
+		ch == FLAG_HASH || ch == PRECISION_DOT || ft_isdigit(ch))
 		return (1); 
 	return (0);
 }
 
-void set_special_flag(char ch, t_format options, int state)
+void set_special_flag(char ch, t_format *options)
 {
+//	printf("set special flag for: %c\n", ch);
 	if (ch == FLAG_MINUS)
-		options.flags = options.flags | FLAG_LEFTALIGN;
+		options->flags = options->flags | FLAG_LEFTALIGN;
 	else if (ch == FLAG_PLUS)
-		options.flags = options.flags | FLAG_ADDSIGN;
+		options->flags = options->flags | FLAG_ADDSIGN;
 	else if (ch == FLAG_SPACE)
-		options.flags = options.flags | FLAG_ADDSPACE;
+		options->flags = options->flags | FLAG_ADDSPACE;
 	else if (ch == FLAG_HASH)
-		options.flags = options.flags | FLAG_ADDHASH;
+		options->flags = options->flags | FLAG_ADDHASH;
 	else if (ch == PRECISION_DOT) 
-		state = PRECISION_MODE;
-	else if (islengthmod(ch))
-		state = LENGTH_MODE;
-	else if (ch == FLAG_ZERO)
+		options->state = PRECISION_MODE;
+	else if (ch == FLAG_ZERO && options->flags != FLAG_ADDZERO)
 	{
-		options.flags = options.flags | FLAG_ADDZERO;
-		state = FLAG_ZERO_MODE;
-//		startdigit = i;
+		options->flags = options->flags | FLAG_ADDZERO;
+		options->state = WIDTH_MODE;
 	}
 	else if (ft_isdigit(ch) && ch != '0') 
 	{
-		options.flags = options.flags | FLAG_WIDTH;
-		state = WIDTH_MODE;
+		options->flags = options->flags | FLAG_WIDTH;
+		options->state = WIDTH_MODE;
 	}
 }
 
-void width_mode(const char *format, t_format options, int i, int state)
+void width_mode(const char *format, t_format *options, int i)
 {
-	char ch; 
-	int startdigit; 
-
-	ch = format[i];
-	startdigit = i;
-	if (ft_isdigit(ch))
-		startdigit++;
-	else
-	{
-		options.width = ft_atoin(&format[startdigit], i);
-		state = FORMAT_MODE;
-	}
+	options->width = ft_atoi(&format[i]);
+	options->state = FORMAT_MODE;
 }
 
-void precision_mode(const char *format, t_format options, int i, int state)
+void precision_mode(const char *format, t_format *options, int i)
 {
-	char ch; 
-	int startdigit; 
-
-	ch = format[i];
-	startdigit = i;
-	if (ft_isdigit(ch))
-		startdigit++;
-	else
-	{
-		options.precision = ft_atoin(&format[startdigit], i);
-		options.flags = options.flags | FLAG_PRECISION;
-		state = FORMAT_MODE;
-	}
+	options->precision = ft_atoi(&format[i]);
+	options->flags = options->flags | FLAG_PRECISION;
+	options->state = FORMAT_MODE;
 }
 
-void length_mode(const char *format, t_format options, int i, int state)
+void set_length_chars(const char *format, t_format *options, char ch)
 {
-	char ch; 
-	int startdigit; 
-
-	ch = format[i];
-	startdigit = i;
-	if (islengthmod(ch))
-	{
-		options.length[0] = format[startdigit];
-		if (state == LENGTH_MODE && islengthmod(ch) == 0)
-		{
-			options.length[0] = format[startdigit];
-			if ((i - startdigit) > 1)
-			{
-				options.length[1] = format[startdigit + 1];
-				options.length[2] = '\0';
-			}
-			else
-				options.length[1] = '\0';
-			state = FORMAT_MODE;
-		}
-	}
+	int i; 
+	i = -1;
+	if (islengthmod(options->length[0]))
+		options->length[++i] = ch;
+	options->length[++i] = ch;
+	options->length[++i] = '\0'; 
+//	printf("length: %s\n", options->length);
+//	printf("strlen: %zu\n", ft_strlen(options->length));
 }
 
-
-int format_mode(FILE *out, const char *format, va_list args, int i, int state) 
+int format_mode(t_format *options, const char *format, va_list args, char ch, FILE *out) 
 {
 	int count;
 	int (*types[TYPE_COUNT])(t_format, va_list, FILE *) = {0};
 	int (*typefunc)(t_format, va_list, FILE *) = 0;
-	static t_format options;
-	char ch;
- 
+
 	inittypes(types);
 	count = 0;
-	ch = format[i];
 	if (ch == '%') 
 	{
 		ft_putchar_file(out, ch);
 		count++;
-		state = NORMAL_MODE;
+		options->state = NORMAL_MODE;
 	}
-
-	else if ((typefunc = types[hash(&ch)]) != 0)
-	{
-		options.type = ch;
-		options.chcount = count;
-		count += typefunc(options, args, out);
-		options = (format_options){0};
-		state = NORMAL_MODE;
-	}
-
 	if (is_special_char(ch)) 
-		set_special_flag(ch, options, state);
-
+		set_special_flag(ch, options);
+	if (islengthmod(ch))
+		set_length_chars(format, options, ch);
+	if ((typefunc = types[hash(&ch)]) != 0)
+	{
+		options->type = ch;
+		options->chcount = count;
+		count += typefunc(*options, args, out);
+		*options = (t_format){0};
+		options->state = NORMAL_MODE;
+	}
 
 	return (count);
 }
 
 int ahprintf(FILE *out, const char *format, va_list args)
 {
-//	int (*types[TYPE_COUNT])(format_options, va_list, FILE *) = {0};
-	char ch; //1?
-	int i; //2
-	int count = 0; //3
-	static int state; //5?
-	static t_format options; //4?
-//	int startdigit = 0;
-//	int (*typefunc)(format_options, va_list, FILE *) = 0;
+	char ch;
+	int i;
+	int count;
+	static int state; 
+	static t_format options;
 
 	i = 0;
-	state = NORMAL_MODE;
-//	inittypes(types);
+	count = 0;
 	ch = format[i];
-
+	options.state = NORMAL_MODE;
 	while (ch != '\0')
 	{
-		/*
-		if (state == FLAG_ZERO_MODE && ft_isdigit(ch) == 0)
-	 	{
-			options.width = ft_atoin(&format[startdigit], i);
-			state = FORMAT_MODE;
-		}
-		
-		if (state == WIDTH_MODE && ft_isdigit(ch) == 0)
-		{
-			options.width = ft_atoin(&format[startdigit], i);
-			state = FORMAT_MODE;
-		}
-		*/
-
-		/*
-		if (state == PRECISION_MODE && ft_isdigit(ch) == 0)
-		{
-			options.precision = ft_atoin(&format[startdigit], i);
-			options.flags = options.flags | FLAG_PRECISION;
-			state = FORMAT_MODE;
-		}
-		*/
-		/*
-		if (state == LENGTH_MODE && islengthmod(ch) == 0)
-		{
-			options.length[0] = format[startdigit];
-			if ((i - startdigit) > 1)
-			{
-				options.length[1] = format[startdigit + 1];
-				options.length[2] = '\0';
-			}
-			else
-				options.length[1] = '\0';
-			state = FORMAT_MODE;
-		}
-		*/
-		if (state == NORMAL_MODE && ch == '%')
-			state = FORMAT_MODE;
-		else if (state == FORMAT_MODE) 
-			format_mode(out, format, args, ch, state);
-
-
-		/*
-		else if (state == FORMAT_MODE)
-		{
-			options.chcount = count;
-			count = format_mode(out, format, args, ch, state);
-		}
-		*/
-		/*
-		else if (state == FORMAT_MODE && ch == '%')
+		if (options.state == NORMAL_MODE && ch == '%')
+			options.state = FORMAT_MODE;
+		else if (options.state == FORMAT_MODE)
+			count += format_mode(&options, format, args, ch, out);
+		else if (options.state == WIDTH_MODE) 
+			width_mode(format, &options, i);
+		else if (options.state == PRECISION_MODE) 
+			precision_mode(format, &options, i);
+		else if (options.state == NORMAL_MODE) 
 		{
 			ft_putchar_file(out, ch);
-			state = NORMAL_MODE;
-		}
-		*/
-
-		/*
-		else if (state == FORMAT_MODE && (typefunc = types[hash(&ch)]) != 0)
-		{
-			options.type = ch;
-			options.chcount = count;
-			count += typefunc(options, args, out);
-			options = (format_options){0};
-			state = NORMAL_MODE;
-		}
-		*/
-		/*
-		else if (state == FORMAT_MODE && ch == FLAG_MINUS)
-			options.flags = options.flags | FLAG_LEFTALIGN;
-
-		else if (state == FORMAT_MODE && ch == FLAG_PLUS)
-			options.flags = options.flags | FLAG_ADDSIGN;
-
-		else if (state == FORMAT_MODE && ch == FLAG_SPACE)
-			options.flags = options.flags | FLAG_ADDSPACE;
-
-		else if (state == FORMAT_MODE && ch == FLAG_ZERO)
-		{
-			options.flags = options.flags | FLAG_ADDZERO;
-			state = FLAG_ZERO_MODE;
-			startdigit = i;
-		}
-		*/
-		else if (state == FLAG_ZERO_MODE || state == WIDTH_MODE) 
-			width_mode(format, options, i);
-		else if (state == PRECISION_MODE) 
-			precision_mode(format, options, i);
-		else if (state == LENGTH_MODE) 
-			length_mode(format, options, i);
-		else if (state == NORMAL_MODE) 
-		{
-			ft_putchar_file(out, ch) ;
 			count++;
 		}
-
-		/*
-		else if (state == FLAG_ZERO_MODE && ch == ft_isdigit(ch))
-		{
-			startdigit++;
-		}
-		*/
-		/*
-		else if (state == WIDTH_MODE && ft_isdigit(ch))
-		{
-			printf("in width mode \n");
-			startdigit++;
-		}
-		*/
-		/*
-		else if (state == FORMAT_MODE && ch == PRECISION_DOT)
-		{
-			state = PRECISION_MODE;
-			startdigit = i + 1; //test to check if there's a digit
-		}
-		*/
-		/*
-		else if (state == PRECISION_MODE && ch == ft_isdigit(ch))
-		{
-			startdigit++;
-		}
-		*/
-		/*
-		else if (state == FORMAT_MODE && islengthmod(ch))
-		{
-			state = LENGTH_MODE;
-			startdigit = i;
-		}
-		*/
-		/*
-		else if (state == FORMAT_MODE && ch == FLAG_HASH)
-		{
-			options.flags = options.flags | FLAG_ADDHASH;
-		}
-		*/
-		/*
-		else if (state == FORMAT_MODE && ft_isdigit(ch) && ch != '0')
-		{
-			state = WIDTH_MODE;
-			options.flags = options.flags | FLAG_WIDTH;
-			startdigit = i;
-		}
-		*/
 		i++;
 		ch = format[i];
 	}
 	ft_putchar_file(out, '\0');
+//	printf("count: %d\n", count);
+//	options.chcount = count;
 	return count;
 }
